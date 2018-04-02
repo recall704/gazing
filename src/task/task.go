@@ -7,7 +7,7 @@ import (
 
 // WatchHelper ...
 type WatchHelper interface {
-	Run(stop <-chan struct{})
+	Run(informers informers.SharedInformerFactory, stop <-chan struct{})
 }
 
 // DefaultWatchHelper ...
@@ -15,8 +15,11 @@ type DefaultWatchHelper struct {
 }
 
 // RunWatchTasks   run all watch task
-func RunWatchTasks(informers informers.SharedInformerFactory) {
-
+func RunWatchTasks(informers informers.SharedInformerFactory, stop <-chan struct{}) {
+	for name, item := range registry {
+		logrus.Infof("start watch task : %s", name)
+		item.Run(informers, stop)
+	}
 }
 
 var registry = make(map[string]WatchHelper)
