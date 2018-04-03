@@ -1,34 +1,36 @@
 package task
 
 import (
-	"github.com/sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"k8s.io/client-go/informers"
 )
 
-// WatchHelper ...
-type WatchHelper interface {
+// WatchTaskHelper ...
+type WatchTaskHelper interface {
 	Run(informers informers.SharedInformerFactory, stop <-chan struct{})
 }
 
-// DefaultWatchHelper ...
-type DefaultWatchHelper struct {
+// DefaultWatchTaskHelper ...
+type DefaultWatchTaskHelper struct {
 }
 
-// RunWatchTasks   run all watch task
-func RunWatchTasks(informers informers.SharedInformerFactory, stop <-chan struct{}) {
-	for name, item := range registry {
-		logrus.Infof("start watch task : %s", name)
-		item.Run(informers, stop)
-	}
-}
-
-var registry = make(map[string]WatchHelper)
+var registry = make(map[string]WatchTaskHelper)
 
 // Register add different authenticators to registry map.
-func Register(name string, w WatchHelper) {
+func Register(name string, h WatchTaskHelper) {
 	if _, dup := registry[name]; dup {
-		logrus.Infof("watch task: %s has been registered,skip", name)
+		logrus.Infof("task: %s has been registered, skip", name)
+		return
 	}
-	registry[name] = w
-	logrus.Infof("Registered watch task: %s", name)
+	registry[name] = h
+	logrus.Infof("Registered task : %s", name)
+}
+
+// RunTask ...
+func RunTask(informers informers.SharedInformerFactory, stop <-chan struct{}) {
+	logrus.Info("tasks start ...")
+	for name, taskItem := range registry {
+		logrus.Infof("start watchTask: %s", name)
+		go taskItem.Run(informers, stop)
+	}
 }
